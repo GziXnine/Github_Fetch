@@ -133,7 +133,7 @@ async function searchUser(username) {
       if (b.stargazers_count !== a.stargazers_count)
         return b.stargazers_count - a.stargazers_count;
 
-      return Date(b.updated_at) - Date(a.updated_at);
+      return new Date(b.updated_at) - new Date(a.updated_at);
     })
 
     renderRepos(sortedRepos);
@@ -167,7 +167,7 @@ async function fetchUser(username) {
 
 async function fetchRepos(username) {
   // 100 Per Page Is Allowed By Github.
-  const response = await fetch(`${API_BASE}/users/${username}/repos?per_page=100&sort=updated&type=owner`);
+  const response = await fetch(`${API_BASE}/users/${username}/repos?per_page=100&sort=updated`);
 
   if (!response.ok) {
     if (response.status === 403)
@@ -190,17 +190,17 @@ function renderUserProfile(user) {
   DOM.userBio.style.display = user.bio ? 'block' : 'none';
 
   if (user.location) {
-    DOM.userLocation.style.diplay = 'flex';
+    DOM.userLocation.style.display = 'flex';
     DOM.userLocationText.textContent = user.location;
   } else {
-    DOM.userLocation.style.diplay = 'none';
+    DOM.userLocation.style.display = 'none';
   }
 
   if (user.company) {
-    DOM.userCompany.style.diplay = 'flex';
-    DOM.userCompanyText.textContent = user.company;
+    DOM.userCompany.style.display = 'flex';
+    DOM.userCompanyText.textContent = user.company.replace(/^@/, '');
   } else {
-    DOM.userCompany.style.diplay = 'none';
+    DOM.userCompany.style.display = 'none';
   }
 
   DOM.userProfileLink.href = user.html_url;
@@ -218,7 +218,7 @@ async function createRepoCard(repo, index) {
 
   const langName = repo.language || await getData(repo);
   const langColor = LANGUAGE_COLORS[langName] || LANGUAGE_COLORS.default;
-  const updatedStr = repo.updated_at;
+  const updatedStr = formatDate(repo.updated_at);
 
   card.innerHTML = `
     <div class="repo-card-header">
@@ -247,11 +247,30 @@ async function createRepoCard(repo, index) {
       ${langName ? `
         <span class="repo-language">
           <span class="language-dot" style="background-color:${langColor}" aria-hidden="true"></span>
-          <span>${escapeHtml(repo.language)}</span>
+          <span>${escapeHtml(langName)}</span>
         </span>` : ''}
+
+        ${repo.stargazers_count > 0 ? `
+        <a class="repo-stat" href="${repo.html_url}/stargazers" target="_blank" title="Stars">
+          <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+            <path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.751.751 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"/>
+          </svg>
+          ${repo.stargazers_count}
+        </a>` : ''}
+
+      ${repo.forks_count > 0 ? `
+        <a class="repo-stat" href="${repo.html_url}/network/members" target="_blank" title="Forks">
+          <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+            <path d="M5 5.372v.878c0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75v-.878a2.25 2.25 0 1 1 1.5 0v.878a2.25 2.25 0 0 1-2.25 2.25h-1.5v2.128a2.251 2.251 0 1 1-1.5 0V8.5h-1.5A2.25 2.25 0 0 1 3.5 6.25v-.878a2.25 2.25 0 1 1 1.5 0ZM5 3.25a.75.75 0 1 0-1.5 0 .75.75 0 0 0 1.5 0Zm6.75.75a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm-3 8.75a.75.75 0 1 0-1.5 0 .75.75 0 0 0 1.5 0Z"/>
+          </svg>
+          ${repo.forks_count}
+        </a>` : ''}
+
+      <span class="repo-updated">
+        Updated ${updatedStr}
+      </span>
     </div>
   `
-  console.log(langName);
 
   return card;
 }
@@ -303,7 +322,7 @@ function escapeHtml(str) {
 function getData(repo) {
   return fetch(`${API_BASE}/repos/${repo.full_name}/languages`)
     .then(res => res.json())
-    .then(data => Object.keys(data)[0]);
+    .then(data => Object.keys(data)[0] || null);
 }
 
 // Click the Search button
