@@ -147,11 +147,32 @@ async function searchUser(username) {
 }
 
 async function fetchUser(username) {
+  const response = await fetch(`${API_BASE}/users/${username}`);
 
+  if (!response.ok) {
+    if (response.status === 404)
+      throw new Error(`User not found. Check the username and try again.`);
+    if (response.status === 403)
+      throw new Error(`GitHub API rate limit exceeded. Please wait a moment and try again.`);
+
+    throw new Error(`GitHub API error (status ${response.status}).`);
+  }
+
+  return response.json();
 }
 
 async function fetchRepos(username) {
+  // 100 Per Page Is Allowed By Github.
+  const response = await fetch(`${API_BASE}/users/${username}/repos?per_page=100&sort=updated&type=owner`);
 
+  if (!response.ok) {
+    if (response.status === 403)
+      throw new Error(`GitHub API rate limit exceeded. Please wait a moment and try again.`);
+
+    throw new Error(`Failed to fetch repositories (status ${response.status}).`);
+  }
+
+  return response.json();
 }
 
 function renderUserProfile(user) {
