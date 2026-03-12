@@ -111,6 +111,7 @@ const UI = {
 
 const API_BASE = 'https://api.github.com';
 
+// MAIN SEARCH FUNCTION
 async function searchUser(username) {
   const trimmedUserName = username.trim();
   if (!trimmedUserName) return;
@@ -126,6 +127,7 @@ async function searchUser(username) {
 
     renderUserProfile(user);
 
+    // Make a New Array, Then Sort Data First By Starts, Second With Date.
     let sortedRepos = [...repos].sort((a, b) => {
       if (b.stargazers_count !== a.stargazers_count)
         return b.stargazers_count - a.stargazers_count;
@@ -146,6 +148,7 @@ async function searchUser(username) {
   }
 }
 
+// API CALLS
 async function fetchUser(username) {
   const response = await fetch(`${API_BASE}/users/${username}`);
 
@@ -175,8 +178,12 @@ async function fetchRepos(username) {
   return response.json();
 }
 
+// RENDER HELPERS
 function renderUserProfile(user) {
-
+  DOM.userAvatar.src = user.avatar_url;
+  DOM.userAvatar.alt = `${user.login}'s avatar`;
+  DOM.userName.textContent = user.name || user.login;
+  DOM.userLogin.textContent = user.login;
 }
 
 function createRepoCard(repo, index) {
