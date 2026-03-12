@@ -184,6 +184,30 @@ function renderUserProfile(user) {
   DOM.userAvatar.alt = `${user.login}'s avatar`;
   DOM.userName.textContent = user.name || user.login;
   DOM.userLogin.textContent = user.login;
+
+  DOM.userBio.textContent = user.bio;
+  DOM.userBio.style.display = user.bio ? 'block' : 'none';
+
+  if (user.location) {
+    DOM.userLocation.style.diplay = 'flex';
+    DOM.userLocationText.textContent = user.location;
+  } else {
+    DOM.userLocation.style.diplay = 'none';
+  }
+
+  if (user.company) {
+    DOM.userCompany.style.diplay = 'flex';
+    DOM.userCompanyText.textContent = user.company;
+  } else {
+    DOM.userCompany.style.diplay = 'none';
+  }
+
+  DOM.userProfileLink.href = user.html_url;
+  DOM.userFollowersLink.href = `${user.html_url}?tab=followers`;
+  DOM.userFollowingLink.href = `${user.html_url}?tab=following`;
+
+  DOM.userFollowersCount.textContent = user.followers;
+  DOM.userFollowingCount.textContent = user.following;
 }
 
 function createRepoCard(repo, index) {
@@ -191,7 +215,31 @@ function createRepoCard(repo, index) {
 }
 
 function renderRepos(repos) {
+  DOM.reposGrid.innerHTML = "";
 
+  if (repos.length === 0) {
+    UI.showEmpty();
+    return;
+  }
+
+  DOM.reposCountBadge.textContent = repos.length;
+
+  // Make a Virtual DOM Like 'React.js' To Add All Cards Once In DOM Not Make a Reflow & Repaint Repeated.
+  const fragment = document.createDocumentFragment();
+  repos.forEach((repo, i) => fragment.appendChild(createRepoCard(repo, i)));
+  DOM.reposGrid.appendChild(fragment);
+}
+
+// UTILITY FUNCTIONS
+function formatDate(isoString) {
+  const date = new Date(isoString);
+  const diffDays = Math.floor((Date.now() - date) / 86_400_000);
+
+  if (diffDays === 0) return 'today';
+  if (diffDays === 1) return 'yesterday';
+  if (diffDays < 30) return `${diffDays} days ago`;
+  if (diffDays < 365) return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 // Click the Search button
